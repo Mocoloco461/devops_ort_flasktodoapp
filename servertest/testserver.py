@@ -1,7 +1,7 @@
 import requests
 import time
 
-url = "http://flask_app:5000/add"
+url = "http://app:5000/add"
 data = {"title": "לסיים את פרויקט Flask"}
 
 start_time = time.time()
