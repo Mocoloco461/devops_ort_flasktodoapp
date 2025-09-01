@@ -1,0 +1,33 @@
+# .github/workflows/update_date.yml
+name: Update Push Date
+
+on:
+  push:
+    branches:
+      - main # מפעיל את ה-Workflow רק ב-push ל-branch הראשי
+
+jobs:
+  update-log:
+    runs-on: ubuntu-latest # מריץ את ה-job על מכונה וירטואלית של אובונטו
+    permissions:
+      contents: write # נותן הרשאה ל-Workflow לשנות קבצים בפרויקט
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # מוריד את קבצי הפרויקט למכונה הווירטואלית
+
+      - name: Get current date and time
+        id: date
+        run: echo "current_date=$(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT # שומר את התאריך והזמן המעודכנים במשתנה
+
+      - name: Append date to file
+        run: |
+          echo "${{ steps.date.outputs.current_date }}" >> push_date.log
+
+      - name: Commit and push updated file
+        run: |
+          git config --global user.name 'github-actions[bot]' # מגדיר את שם המשתמש עבור הקומיט
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com' # מגדיר את המייל של המשתמש
+          git add push_date.log # מוסיף את הקובץ המעודכן לקומיט
+          git commit -m "Update push_date.log with latest push date" # יוצר קומיט חדש
+          git push # דוחף את השינויים חזרה ל-repository
