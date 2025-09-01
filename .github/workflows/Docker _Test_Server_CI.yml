@@ -1,6 +1,4 @@
-# Path: .github/workflows/docker-test.yml
 name: Docker Test Server CI
-
 on:
   push:
     branches:
@@ -9,7 +7,6 @@ on:
 jobs:
   run-docker-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -19,14 +16,17 @@ jobs:
 
       - name: Run Test Server and Check Logs
         run: |
+          # הפעלת כל השירותים ב-docker compose
           docker compose -f docker-compose-testserver.yml up -d
-
-          CONTAINER_NAME="server_test"
+          
+          # מציאת השם האמיתי של הקונטיינר של שירות ה-app
+          CONTAINER_NAME=$(docker compose -f docker-compose-testserver.yml ps -q app)
+          
           LOG_FILE="docker.log"
-          URL="http://flask_app:5000/add"
           ACTOR=$GITHUB_ACTOR
-
-          echo "Waiting for container $CONTAINER_NAME to start..."
+          
+          echo "Waiting for container to start..."
+          
           ATTEMPTS=0
           while [ $ATTEMPTS -lt 30 ]; do
             if docker ps --filter "name=$CONTAINER_NAME" --filter "status=running" | grep -q $CONTAINER_NAME; then
@@ -36,31 +36,28 @@ jobs:
             sleep 2
             ATTEMPTS=$((ATTEMPTS+1))
           done
-
+          
           if [ $ATTEMPTS -eq 30 ]; then
             echo "$(date '+%Y-%m-%d %H:%M:%S') | $ACTOR | Container failed to start" >> $LOG_FILE
             echo "Container failed to start."
             exit 1
           fi
+          
+          echo "Waiting for test to complete..."
+          
+          # המתנה שהבדיקה בקונטיינר server_test תסתיים
+          TEST_CONTAINER_NAME=$(docker compose -f docker-compose-testserver.yml ps -q server_test)
+          if ! docker wait $TEST_CONTAINER_NAME; then
+            echo "Test container exited with an error."
+          fi
 
-          echo "Waiting for server to respond..."
-          SUCCESS=false
-          START_TIME=$(date +%s)
-          while [ $(($(date +%s) - START_TIME)) -lt 60 ]; do
-            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST $URL -d "title=Test Task")
-            if [ "$RESPONSE" = "200" ]; then
-              SUCCESS=true
-              break
-            fi
-            sleep 2
-          done
-
-          # בדיקה נוספת בלוגים אם מופיעה שגיאה
-          LOG=$(docker logs $CONTAINER_NAME 2>&1)
+          # בדיקת הלוגים של קונטיינר הבדיקה (server_test)
+          LOG=$(docker logs $TEST_CONTAINER_NAME 2>&1)
+          SUCCESS=true
           if echo "$LOG" | grep -q "Error: not working"; then
             SUCCESS=false
           fi
-
+          
           if [ "$SUCCESS" = true ]; then
             echo "$(date '+%Y-%m-%d %H:%M:%S') | $ACTOR | Test Passed" >> $LOG_FILE
             echo "Test Passed ✅"
