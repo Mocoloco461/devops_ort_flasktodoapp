@@ -16,21 +16,24 @@ jobs:
 
       - name: Run Test Server and Check Logs
         run: |
-          # הפעלת כל השירותים ב-docker compose
           docker compose -f docker-compose-testserver.yml up -d
           
-          # מציאת השם האמיתי של הקונטיינר של שירות ה-app
-          CONTAINER_NAME=$(docker compose -f docker-compose-testserver.yml ps -q app)
+          # קבלת השם האמיתי של הקונטיינר של שירות ה-app
+          APP_CONTAINER_NAME=$(docker compose -f docker-compose-testserver.yml ps -q app)
+          
+          # קבלת השם האמיתי של הקונטיינר של שירות הבדיקה
+          TEST_CONTAINER_NAME=$(docker compose -f docker-compose-testserver.yml ps -q server_test)
           
           LOG_FILE="docker.log"
           ACTOR=$GITHUB_ACTOR
           
-          echo "Waiting for container to start..."
+          echo "Waiting for app container to start..."
           
+          # המתנה לקונטיינר הראשי של האפליקציה (app) שיתחיל
           ATTEMPTS=0
           while [ $ATTEMPTS -lt 30 ]; do
-            if docker ps --filter "name=$CONTAINER_NAME" --filter "status=running" | grep -q $CONTAINER_NAME; then
-              echo "Container $CONTAINER_NAME is running."
+            if docker ps --filter "name=$APP_CONTAINER_NAME" --filter "status=running" | grep -q $APP_CONTAINER_NAME; then
+              echo "App container is running."
               break
             fi
             sleep 2
@@ -38,15 +41,14 @@ jobs:
           done
           
           if [ $ATTEMPTS -eq 30 ]; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') | $ACTOR | Container failed to start" >> $LOG_FILE
-            echo "Container failed to start."
+            echo "$(date '+%Y-%m-%d %H:%M:%S') | $ACTOR | App container failed to start" >> $LOG_FILE
+            echo "App container failed to start."
             exit 1
           fi
-          
-          echo "Waiting for test to complete..."
+
+          echo "Waiting for test container to complete..."
           
           # המתנה שהבדיקה בקונטיינר server_test תסתיים
-          TEST_CONTAINER_NAME=$(docker compose -f docker-compose-testserver.yml ps -q server_test)
           if ! docker wait $TEST_CONTAINER_NAME; then
             echo "Test container exited with an error."
           fi
