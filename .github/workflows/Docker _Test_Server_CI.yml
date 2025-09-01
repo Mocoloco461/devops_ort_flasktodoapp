@@ -26,14 +26,13 @@ jobs:
           URL="http://flask_app:5000/add"
           ACTOR=$GITHUB_ACTOR
 
-          # המתנה עד שהקונטיינר יהיה פעיל
+          echo "Waiting for container $CONTAINER_NAME to start..."
           ATTEMPTS=0
           while [ $ATTEMPTS -lt 30 ]; do
             if docker ps --filter "name=$CONTAINER_NAME" --filter "status=running" | grep -q $CONTAINER_NAME; then
               echo "Container $CONTAINER_NAME is running."
               break
             fi
-            echo "Waiting for container to start..."
             sleep 2
             ATTEMPTS=$((ATTEMPTS+1))
           done
@@ -44,7 +43,7 @@ jobs:
             exit 1
           fi
 
-          # בדיקה עד דקה אם האפליקציה מצליחה
+          echo "Waiting for server to respond..."
           SUCCESS=false
           START_TIME=$(date +%s)
           while [ $(($(date +%s) - START_TIME)) -lt 60 ]; do
@@ -56,7 +55,7 @@ jobs:
             sleep 2
           done
 
-          # בדיקה אם יש שגיאה בלוגים
+          # בדיקה נוספת בלוגים אם מופיעה שגיאה
           LOG=$(docker logs $CONTAINER_NAME 2>&1)
           if echo "$LOG" | grep -q "Error: not working"; then
             SUCCESS=false
