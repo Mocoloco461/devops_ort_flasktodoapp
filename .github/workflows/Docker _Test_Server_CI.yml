@@ -1,0 +1,72 @@
+# Path: .github/workflows/docker-test.yml
+name: Docker Test Server CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-docker-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run Test Server and Check Logs
+        run: |
+          docker compose -f docker-compose-testserver.yml up -d
+
+          CONTAINER_NAME="server_test"
+          LOG_FILE="docker.log"
+          URL="http://flask_app:5000/add"
+          ACTOR=$GITHUB_ACTOR
+
+          # המתנה עד שהקונטיינר יהיה פעיל
+          ATTEMPTS=0
+          while [ $ATTEMPTS -lt 30 ]; do
+            if docker ps --filter "name=$CONTAINER_NAME" --filter "status=running" | grep -q $CONTAINER_NAME; then
+              echo "Container $CONTAINER_NAME is running."
+              break
+            fi
+            echo "Waiting for container to start..."
+            sleep 2
+            ATTEMPTS=$((ATTEMPTS+1))
+          done
+
+          if [ $ATTEMPTS -eq 30 ]; then
+            echo "$(date '+%Y-%m-%d %H:%M:%S') | $ACTOR | Container failed to start" >> $LOG_FILE
+            echo "Container failed to start."
+            exit 1
+          fi
+
+          # בדיקה עד דקה אם האפליקציה מצליחה
+          SUCCESS=false
+          START_TIME=$(date +%s)
+          while [ $(($(date +%s) - START_TIME)) -lt 60 ]; do
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST $URL -d "title=Test Task")
+            if [ "$RESPONSE" = "200" ]; then
+              SUCCESS=true
+              break
+            fi
+            sleep 2
+          done
+
+          # בדיקה אם יש שגיאה בלוגים
+          LOG=$(docker logs $CONTAINER_NAME 2>&1)
+          if echo "$LOG" | grep -q "Error: not working"; then
+            SUCCESS=false
+          fi
+
+          if [ "$SUCCESS" = true ]; then
+            echo "$(date '+%Y-%m-%d %H:%M:%S') | $ACTOR | Test Passed" >> $LOG_FILE
+            echo "Test Passed ✅"
+          else
+            echo "$(date '+%Y-%m-%d %H:%M:%S') | $ACTOR | Test Failed" >> $LOG_FILE
+            echo "Test Failed ❌"
+            exit 1
+          fi
