@@ -41,7 +41,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: moshe2003
-          password: ${{ secrets.DOCKERHUB }}
+          password: dckr_pat_74bcwo28H9hmfxbRvLOU8JoSBag
 
       - name: Get next version number
         if: success()
