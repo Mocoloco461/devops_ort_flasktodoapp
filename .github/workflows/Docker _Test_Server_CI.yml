@@ -46,6 +46,6 @@ jobs:
       - name: Build and push server_test image
         if: success()
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/server_test:latest ./servertest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/server_test:latest
+          docker build -t moshe2003/server_test:latest ./servertest
+          docker push moshe2003/server_test:latest
           echo "✅ Image pushed to Docker Hub successfully!"
