@@ -21,29 +21,17 @@ jobs:
         run: |
           docker compose -f docker-compose-testserver.yml up -d
 
-      - name: Wait for container to be ready
+      - name: Wait for test completion
         run: |
-          echo "Waiting for server_test to start..."
-          for i in {1..30}; do
-            if docker ps --filter "name=server_test" --filter "status=running" | grep -q server_test; then
-              echo "server_test is running!"
-              exit 0
-            fi
-            echo "Still waiting..."
-            sleep 2
-          done
-          echo "server_test did not start in time."
-          docker ps -a
-          exit 1
+          echo "Waiting for test to complete..."
+          timeout 120 docker logs -f server_test || true
 
-      - name: Show server_test logs
+      - name: Check test result
         run: |
-          echo "==== Logs from server_test ===="
-          docker logs server_test
-
-      - name: Check container status
-        run: |
-          echo "==== All containers ===="
-          docker ps -a
-          echo "==== server_test container details ===="
-          docker inspect server_test
+          if docker logs server_test 2>&1 | grep -q "Success!"; then
+            echo "✅ Test PASSED"
+            exit 0
+          else
+            echo "❌ Test FAILED"
+            exit 1
+          fi
