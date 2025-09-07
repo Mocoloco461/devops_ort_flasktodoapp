@@ -40,3 +40,10 @@ jobs:
         run: |
           echo "==== Logs from server_test ===="
           docker logs server_test
+
+      - name: Check container status
+        run: |
+          echo "==== All containers ===="
+          docker ps -a
+          echo "==== server_test container details ===="
+          docker inspect server_test
