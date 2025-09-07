@@ -71,33 +71,6 @@ services:
       # build those images first
       - app
 
-
-  test:
-    image: test:latest
-    container_name: flask_app
-    restart: unless-stopped
-    build:
-      # build the image from Dockerfile
-      context: .
-      dockerfile: Dockerfile
-    environment:
-      # set database credentials
-      DB_HOST: flask_mysql
-      DB_NAME: flask
-      DB_USER: flask
-      DB_PASSWORD: password
-
-    networks:
-      - Yoav
-    depends_on:
-      # build those images first
-      - mysql
-    ports:
-      # bind on our 5000 port because most people have 80, 8080 already bound
-      - "5000:5000"
-
-
-
 # volumes definition here
 volumes:
   # just a persistance data
