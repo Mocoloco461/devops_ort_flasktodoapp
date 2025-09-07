@@ -40,8 +40,8 @@ jobs:
         if: success()
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: moshe2003
+          password: dckr_pat_eiACPW4WmsNvxTxXPIVni7wkxgo
 
       - name: Build and push server_test image
         if: success()
