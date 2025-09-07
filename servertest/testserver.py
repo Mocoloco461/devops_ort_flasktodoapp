@@ -2,7 +2,7 @@ import requests
 import time
 
 url = "http://app:5000/add"
-data = {"title": "לסיים את פרויקט Flask"}
+data = {"title": "נאיף זה גס Flask"}
 
 start_time = time.time()
 success = False
