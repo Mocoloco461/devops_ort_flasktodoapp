@@ -41,7 +41,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: moshe2003
-          password: dckr_pat_74bcwo28H9hmfxbRvLOU8JoSBag
+          password: dckr_pat_b5gUPWoz7ZpuynsZYV8kP3CIBPg
 
       - name: Get next version number for test
         if: success()
@@ -60,7 +60,7 @@ jobs:
           echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
           echo "Next version: $NEXT_VERSION"
 
-      - name: Get next version number for app
+      - name: Get next version number for appb
         if: success()
         id: version_app
         run: |
