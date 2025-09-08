@@ -102,7 +102,7 @@ jobs:
           echo "Building version: $VERSION"
           
           # Build with version tag
-          docker build -t moshe2003/flask_app:$VERSION ./servertest
+          docker build -t moshe2003/flask_app:$VERSION .
           docker push moshe2003/flask_app:$VERSION
           
           # Also tag as latest
