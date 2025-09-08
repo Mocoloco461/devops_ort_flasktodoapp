@@ -106,7 +106,7 @@ jobs:
           docker push moshe2003/flask_app:$VERSION
           
           # Also tag as latest
-          docker tag moshe2003/flask_app:$VERSION moshe2003/server_test:latest
+          docker tag moshe2003/flask_app:$VERSION moshe2003/flask_app:latest
           docker push moshe2003/flask_app:latest
 
           
