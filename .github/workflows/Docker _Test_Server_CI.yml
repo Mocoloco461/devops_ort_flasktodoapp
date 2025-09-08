@@ -43,9 +43,9 @@ jobs:
           username: moshe2003
           password: dckr_pat_74bcwo28H9hmfxbRvLOU8JoSBag
 
-      - name: Get next version number
+      - name: Get next version number for test
         if: success()
-        id: version
+        id: version_test
         run: |
           # Get latest version from Docker Hub
           LATEST_VERSION=$(docker run --rm curlimages/curl -s "https://registry.hub.docker.com/v2/repositories/moshe2003/server_test/tags/?page_size=100" | grep -o '"name":"[0-9]*"' | grep -o '[0-9]*' | sort -n | tail -1)
@@ -60,10 +60,27 @@ jobs:
           echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
           echo "Next version: $NEXT_VERSION"
 
+      - name: Get next version number for app
+        if: success()
+        id: version_app
+        run: |
+          # Get latest version from Docker Hub
+          LATEST_VERSION=$(docker run --rm curlimages/curl -s "https://registry.hub.docker.com/v2/repositories/moshe2003/flask_mysql/tags/?page_size=100" | grep -o '"name":"[0-9]*"' | grep -o '[0-9]*' | sort -n | tail -1)
+          
+          # If no versions exist, start with 1
+          if [ -z "$LATEST_VERSION" ]; then
+            NEXT_VERSION=1
+          else
+            NEXT_VERSION=$((LATEST_VERSION + 1))
+          fi
+          
+          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "Next version: $NEXT_VERSION"
+
       - name: Build and push server_test image
         if: success()
         run: |
-          VERSION=${{ steps.version.outputs.version }}
+          VERSION=${{ steps.version_test.outputs.version }}
           echo "Building version: $VERSION"
           
           # Build with version tag
@@ -77,3 +94,23 @@ jobs:
           echo "✅ Image pushed to Docker Hub successfully!"
           echo "Version: $VERSION"
           echo "Latest: latest"
+
+      - name: Build and push flask_app image
+        if: success()
+        run: |
+          VERSION=${{ steps.version_app.outputs.version }}
+          echo "Building version: $VERSION"
+          
+          # Build with version tag
+          docker build -t moshe2003/flask_app:$VERSION ./servertest
+          docker push moshe2003/flask_app:$VERSION
+          
+          # Also tag as latest
+          docker tag moshe2003/flask_app:$VERSION moshe2003/server_test:latest
+          docker push moshe2003/flask_app:latest
+
+          
+          echo "✅ Image pushed to Docker Hub successfully!"
+          echo "Version: $VERSION"
+          echo "Latest: latest"
+
